@@ -1,111 +1,62 @@
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-
+from django.utils import timezone
 from app import models
-
-
+from background_task import background
+from django.utils import timezone
+from .models import LibrarySeat, Reservation
 # 打开系统首页
 def toWelcomeView(request):
-    return render(request,'welcome.html')  #渲染欢迎页面
+    return render(request, 'welcome.html')  # 渲染欢迎页面
 
-def toPageGradeInfos(request):
-    pageIndex = request.GET.get('pageIndex',1)
-    pageSize = request.GET.get('pageSize',10)
-    data=models.Grades.objects.all()#获取所有的页面
-    page=Paginator(data,pageSize)
-    resl=[]
-    for item in page.page(pageIndex):
-        resl.append({
-            'id': item.id,
-            'name': item.name,
-            'address': item.address,
-        })
-    return render(request,'grades/data.html',{'pageIndex':int(pageIndex),
-        'pageSize':int(pageSize),'count':page.count,'data':resl,'pageTotal':page.page(pageIndex).paginator.num_pages})
+# 座位选择页
+def toPageSeatInfos(request):
+    available_seats = models.LibrarySeat.objects.filter(is_available=True)
+    return render(request, 'seats/data.html', {'seats': available_seats})
 
-#跳转班级添加页面
-def toPageGradeView(request):
-    return render(request,'grades/add.html')
+# 预约确认页
+def toReservationConfirmView(request):
+    if request.method == 'POST':
+        seat_id = request.POST.get('seat_id')
+        user_id = request.POST.get('user_id')
+        start_time_str = request.POST.get('start_time')
 
-#添加班级信息
-def addGradeForm(request):
-    models.Grades.objects.create(name=request.POST['name'],address=request.POST['address'])
-    return redirect('/grades/page')
+        start_time = timezone.datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+        start_time = timezone.make_aware(start_time)
+        end_time = start_time + timezone.timedelta(hours=4)  # 最多 4 小时
 
-#跳转班级修改页面
-def toUpdGradeView(request):
-    info=models.Grades.objects.get(id=request.GET['id'])
-    return render(request,'grades/upd.html',{'info':info})
+        seat = models.LibrarySeat.objects.get(id=seat_id)
+        seat.is_available = False
+        seat.save()
 
-#添加修改班级信息函数
-def updGradeForm(request):
-    models.Grades.objects.filter(id=request.POST['id']).update(name=request.POST['name'],address=request.POST['address'])
-    return redirect('/grades/page')
+        models.Reservation.objects.create(
+            seat=seat,
+            user_id=user_id,
+            start_time=start_time,
+            end_time=end_time
+        )
+        return redirect('/reservations/history')
 
+    seats = models.LibrarySeat.objects.filter(is_available=True)
+    return render(request, 'reservations/confirm.html', {'seats': seats})
 
-#删除班级信息
-def delGradeForm(request):
-    models.Grades.objects.filter(id=request.GET['id']).delete()
-    return redirect('/grades/page')
+# 用户预约记录页
+def toReservationHistoryView(request):
+    user_id = request.GET.get('user_id')
+    reservations = models.Reservation.objects.filter(user_id=user_id)
+    return render(request, 'reservations/history.html', {'reservations': reservations})
 
-#分页查询学生信息
-def getPageStudentInfos(request):
-    pageIndex = request.GET.get('pageIndex', 1)
-    pageSize = request.GET.get('pageSize', 5)
-    data=models.Students.objects.all()#获取所有的页面
-    page=Paginator(data,pageSize)
-    resl=[]
-    for item in page.page(pageIndex):
-        resl.append({
-            'id': item.id,
-            'name': item.name,
-            'gender': item.gender,
-            'age': item.age,
-            'intoTime': item.intoTime,
-            'gradeId': item.grade.id,
-            'gradeName': item.grade.name,
-        })
-    return render(request,'students/data.html',{'pageIndex':int(pageIndex),
-                                                'pageSize':int(pageSize),'count':page.count,'data':resl,
-                                                'pageTotal':page.page(pageIndex).paginator.num_pages})
+# 扫码页面
+def toScanQrCodeView(request):
+    return render(request, 'scan_qr_code.html')
 
-
-
-#跳转学生信息添加界面
-def toAddStudentView(request):
-    grades=models.Grades.objects.all()
-    return render(request,'students/add.html',{'grades':grades})
-
-#添加学生信息
-def addStudentForm(request):
-    models.Students.objects.create(
-        name=request.POST['name'],
-        gender=request.POST['gender'],
-        age=request.POST['age'],
-        intoTime=request.POST['intoTime'],
-        grade=models.Grades.objects.get(pk=request.POST['gradeId']))
-    return redirect('/students/page')
-
-#跳转学生信息修改界面
-def toUpdateStudentView(request):
-    grades=models.Grades.objects.all()
-    info=models.Students.objects.get(id=request.GET['id'])
-    return render(request,'students/upd.html',{'info':info,'grades':grades})
-
-#修改学生信息
-def updStudentForm(request):
-    models.Students.objects.filter(id=request.POST['id']).update(
-        name=request.POST['name'],
-        gender=request.POST['gender'],
-        age=request.POST['age'],
-        intoTime=request.POST['intoTime'],
-        grade=models.Grades.objects.get(pk=request.POST['gradeId'])
-    )
-    return redirect('/students/page')
-
-#删除学生信息
-def delStudentForm(request):
-    models.Students.objects.filter(id=request.GET['id']).delete()
-    return redirect('/students/page')
-
+# 自动释放超时未使用座位的功能
+@background(schedule=60)
+def release_overdue_seats():
+    now = timezone.now()
+    overdue_reservations = Reservation.objects.filter(end_time__lt=now, is_used=False)
+    for reservation in overdue_reservations:
+        reservation.seat.is_available = True
+        reservation.seat.save()
+        reservation.delete()

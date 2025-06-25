@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>预约确认</title>
+</head>
+<body>
+    <div>
+        <div>预约确认</div>
+        <div>
+            <form action="/reservations/confirm" method="post">
+                <div>
+                    <label>选择座位</label>
+                    <select name="seat_id">
+                        {% for seat in seats %}
+                            <option value="{{ seat.id }}">{{ seat.seat_number }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>用户 ID</label>
+                    <input type="text" name="user_id" placeholder="请输入用户 ID">
+                </div>
+                <div>
+                    <label>开始时间</label>
+                    <input type="datetime-local" name="start_time">
+                </div>
+                <div>
+                    <button type="submit">提交</button>
+                    <button type="reset">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

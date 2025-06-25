@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>座位选择</title>
+</head>
+<body>
+    <div>
+        <div>座位选择</div>
+        <div>
+            <table>
+                <tr>
+                    <th>座位编号</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                {% for seat in seats %}
+                    <tr>
+                        <td>{{ seat.seat_number }}</td>
+                        <td>{% if seat.is_available %}可用{% else %}已预约{% endif %}</td>
+                        <td>
+                            {% if seat.is_available %}
+                                <a href="/reservations/confirm?seat_id={{ seat.id }}">预约</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
