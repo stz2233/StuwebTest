@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>扫码选座</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .qr-scanner { margin: 20px 0; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+        .scan-area { position: relative; width: 300px; height: 300px; margin: 0 auto 20px; border: 2px dashed #4CAF50; border-radius: 5px; }
+        .scan-frame { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 260px; height: 260px; border: 2px solid #4CAF50; border-radius: 3px; }
+        .scan-line { position: absolute; top: 0; left: 50%; width: 260px; height: 2px; background-color: #4CAF50; transform: translate(-50%, 0); animation: scan 2s linear infinite; }
+        @keyframes scan {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            50% { transform: translate(-50%, 260px); opacity: 1; }
+            100% { transform: translate(-50%, 260px); opacity: 0; }
+        }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; }
+        .btn:hover { background-color: #45a049; }
+        .input-group { margin: 15px 0; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; }
+        .input-group input, .input-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .error { color: red; margin-bottom: 15px; }
+        .success { color: green; margin-bottom: 15px; }
+        .seat-image { margin: 15px 0; }
+        .seat-image img { max-width: 100%; max-height: 200px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>扫码选座</h1>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if success %}
+            <p class="success">{{ success }}</p>
+        {% endif %}
+
+        <div class="qr-scanner">
+            <div class="scan-area">
+                <div class="scan-frame"></div>
+                <div class="scan-line"></div>
+            </div>
+
+            <p>将二维码对准扫描区域</p>
+
+            <div class="input-group">
+                <label for="qr-code">或手动输入二维码内容</label>
+                <input type="text" id="qr-code" name="qr-data" placeholder="例如: http://...?seat_id=123">
+                <button onclick="simulateScan()">模拟扫码</button>
+            </div>
+        </div>
+
+        {% if seat %}
+            <div class="qr-scanner">
+                <h3>已扫描座位：{{ seat.seat_number }}</h3>
+
+                <!-- 显示座位图片 -->
+                <div class="seat-image">
+                    {% if seat.image_url %}
+                        <img src="{{ seat.image_url }}" alt="{{ seat.seat_number }}座位图">
+                    {% else %}
+                        <p>暂无座位图片</p>
+                    {% endif %}
+                </div>
+
+                {% if seat.is_available %}
+                    <p>此座位当前可用</p>
+                    <form action="/reservations/confirm" method="post">
+                        <input type="hidden" name="seat_id" value="{{ seat.id }}">
+                        <div class="input-group">
+                            <label for="user-id">用户 ID</label>
+                            <input type="text" id="user-id" name="user_id" placeholder="请输入用户 ID" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="start-time">开始时间</label>
+                            <input type="datetime-local" id="start-time" name="start_time" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="duration">预约时长</label>
+                            <select id="duration" name="duration" required>
+                                <option value="30">30分钟</option>
+                                <option value="60" selected>1小时</option>
+                                <option value="120">2小时</option>
+                                <option value="180">3小时</option>
+                                <option value="240">4小时</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">确认预约</button>
+                    </form>
+                {% else %}
+                    <p style="color: red;">此座位已被预约</p>
+                    <a href="/seats/page" class="btn">查看其他座位</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <a href="/" class="btn">返回首页</a>
+    </div>
+
+    <script>
+        function simulateScan() {
+            const qrInput = document.getElementById('qr-code');
+            const qrData = qrInput.value;
+
+            if (qrData) {
+                const urlParams = new URLSearchParams(qrData.split('?')[1]);
+                const seatId = urlParams.get('seat_id');
+
+                if (seatId) {
+                    window.location.href = `/scan/qr/code?seat_id=${seatId}`;
+                } else {
+                    alert('无效的二维码数据');
+                }
+            } else {
+                alert('请输入二维码内容');
+            }
+        }
+    </script>
+</body>
+</html>

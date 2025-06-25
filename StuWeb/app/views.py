@@ -1,7 +1,4 @@
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.utils import timezone
+import os
 from app import models
 from background_task import background
 from django.utils import timezone
@@ -9,7 +6,10 @@ from .models import LibrarySeat, Reservation
 from django.http import HttpResponseBadRequest
 import qrcode
 from io import BytesIO
+from django.conf import settings
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
+
 # 打开系统首页
 def toWelcomeView(request):
     user_id = request.GET.get('user_id')
@@ -53,7 +53,7 @@ def generateQrCode(request):
         return HttpResponse("缺少座位ID", status=400)
 
     # 生成二维码内容（包含座位ID的URL）
-    qr_data = f"http://127.0.0.1:8000/scan_qr_code?seat_id={seat_id}"
+    qr_data = f"http://127.0.0.1:8000/scan/qr/code?seat_id={seat_id}"
 
     # 创建二维码对象
     qr = qrcode.QRCode(
@@ -148,6 +148,7 @@ def toReservationHistoryView(request):
 def toScanQrCodeView(request):
     seat_id = request.GET.get('seat_id')
     error = None
+    success = None
     seat = None
 
     if seat_id:
@@ -155,13 +156,51 @@ def toScanQrCodeView(request):
             seat = LibrarySeat.objects.get(id=seat_id)
         except LibrarySeat.DoesNotExist:
             error = "未找到该座位"
+        else:
+            success = f"已成功扫描座位: {seat.seat_number}"
 
-    return render(request, 'scan_qr_code.html',{
+    return render(request, 'scan/qr/code.html', {
         'seat_id': seat_id,
         'seat': seat,
-        'error': error
+        'error': error,
+        'success': success
     })
 
+#添加图片上传
+def uploadSeatImage(request):
+    if request.method == 'POST':
+        seat_id = request.POST.get('seat_id')
+        image_file = request.FILES.get('image')
+
+        if not seat_id or not image_file:
+            return HttpResponse("缺少参数", status=400)
+
+        try:
+            seat = LibrarySeat.objects.get(id=seat_id)
+        except LibrarySeat.DoesNotExist:
+            return HttpResponse("座位不存在", status=404)
+
+        # 保存图片到媒体目录
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'seats')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # 生成唯一文件名
+        file_ext = os.path.splitext(image_file.name)[1]
+        file_name = f"seat_{seat_id}_{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(upload_dir, file_name)
+
+        with open(file_path, 'wb+') as destination:
+            for chunk in image_file.chunks():
+                destination.write(chunk)
+
+        # 更新座位图片URL
+        image_url = os.path.join(settings.MEDIA_URL, 'seats', file_name)
+        seat.image_url = image_url
+        seat.save()
+
+        return redirect(f'/qrcode/generate?seat_id={seat_id}')
+
+    return HttpResponse("方法不允许", status=405)
 
 #取消预约视图
 def cancelReservation(request):

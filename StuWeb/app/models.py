@@ -5,6 +5,10 @@ from django.utils import timezone
 class LibrarySeat(models.Model):
     seat_number = models.CharField('座位编号', max_length=20, null=False)
     is_available = models.BooleanField('是否可用', default=True)
+    image_url = models.CharField(max_length=200, blank=True, null=True)
+
+    def __str__(self):
+        return self.seat_number
 
     class Meta:
         db_table = 'library_seats'

@@ -8,6 +8,8 @@
         .container { max-width: 600px; margin: 0 auto; }
         .qr-code { margin: 20px 0; }
         .btn { display: inline-block; padding: 8px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+        .img-preview { margin: 15px 0; min-height: 100px; border: 1px dashed #ddd; padding: 10px; }
+        .img-preview img { max-width: 100%; max-height: 200px; }
     </style>
 </head>
 <body>
@@ -15,13 +17,15 @@
         <h1>生成座位二维码</h1>
 
         <form method="GET" action="">
-            <label for="seat_id">选择座位：</label>
-            <select name="seat_id">
-                {% for seat in seats %}
-                    <option value="{{ seat.id }}">{{ seat.seat_number }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit">生成二维码</button>
+            <div style="margin-bottom: 15px;">
+                <label for="seat_id">选择座位：</label>
+                <select name="seat_id">
+                    {% for seat in seats %}
+                        <option value="{{ seat.id }}">{{ seat.seat_number }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">生成二维码</button>
+            </div>
         </form>
 
         {% if seat_id %}
@@ -29,6 +33,23 @@
                 <h3>{{ selected_seat.seat_number }} 座位二维码</h3>
                 <img src="/qrcode/generate?seat_id={{ seat_id }}" alt="座位二维码">
                 <p>扫描此二维码预约 {{ selected_seat.seat_number }} 座位</p>
+
+                <!-- 图片上传功能 -->
+                <h4>座位图片</h4>
+                <div class="img-preview">
+                    {% if selected_seat.image_url %}
+                        <img src="{{ selected_seat.image_url }}" alt="{{ selected_seat.seat_number }}座位图">
+                    {% else %}
+                        <p>未上传图片</p>
+                    {% endif %}
+                </div>
+
+                <form method="POST" action="/qrcode/upload_image" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="seat_id" value="{{ seat_id }}">
+                    <input type="file" name="image" accept="image/*">
+                    <button type="submit">上传图片</button>
+                </form>
             </div>
         {% endif %}
 
