@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学生信息管理</title>
+</head>
+<body>
+    <div>
+        <div>班级管理添加</div>
+        <div>
+            <div>
+                <a href="/grades/page">返回</a>
+            </div>
+            <div>
+                <form action ="/grades/add/form" method="post">
+                    <div>
+                        <label>班级名称</label>
+                        <input type="text" name="name" placeholder="请输入班级名称">
+                    </div>
+                    <div>
+                        <label>班级地址</label>
+                        <input type="text" name="address" placeholder="请输入班级地址">
+                    </div>
+                    <div>
+                        <button type="submit">提交</button>
+                        <button type="reset">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

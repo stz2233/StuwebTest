@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学生信息管理</title>
+</head>
+<body>
+    <div>
+        <div>班级管理添加</div>
+        <div>
+            <div>
+                <a href="/grades/page">返回</a>
+            </div>
+            <div>
+                <form action ="/students/upd/form" method="post">
+                    <div>
+                        <label>学生姓名</label>
+                        <input type="text" name="name" value="{{info.name}}" placeholder="请输入班级名称">
+                    </div>
+                    <div>
+                        <label>学生性别</label>
+                        {% if info.gender == '男' %}
+                        <input type="radio" name="gender" value="男" checked>男
+                        <input type="radio" name="gender" value="女">女
+                        {% else %}
+                        <input type="radio" name="gender" value="男" >男
+                        <input type="radio" name="gender" value="女" checked>女
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label>学生年龄</label>
+                        <input type="text" name="age" value="{{info.age}}" placeholder="请输入学生年龄">
+                    </div>
+                    <div>
+                        <label>入学时间</label>
+                        <input type="text" name="intoTime" value="{{info.intoTime}}" placeholder="请输入入学时间">
+                    </div>
+                    <div>
+                        <label>选择班级</label>
+                        <select name="gradeId">
+                            {% for item in grades %}
+                                {% if info.grade.id == item.id %}
+                                <option value="{{item.id}}" selected>{{ item.name }}</option>
+                                {% else %}
+                                <option value="{{item.id}}">{{ item.name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="id" value="{{info.id}}">
+                    <div>
+                        <button type="submit">提交</button>
+                        <button type="reset">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
