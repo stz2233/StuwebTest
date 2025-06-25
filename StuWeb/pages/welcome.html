@@ -1,17 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>公共图书馆座位预约系统</title>
+    <meta charset="UTF-8">
+    <title>公共图书馆座位预约系统</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { text-align: center; color: #333; }
+        .section { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+        .btn { display: inline-block; padding: 8px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+        .btn:hover { background-color: #45a049; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; text-align: left; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
-    <div>
-        <div style="color: aquamarine;font-size: 40px;border:2px solid black;text-align: center">公共图书馆座位预约系统</div>
-        <div>
-            <ol type="1">
-                <li><a href="/seats/page">座位选择</a></li>
-                <li><a href="/scan/qr/code">扫码选座</a></li>
-            </ol>
+    <div class="container">
+        <div class="header">
+            <h1>公共图书馆座位预约系统</h1>
+            <p>高效便捷的图书馆座位预约服务</p>
+        </div>
+
+        <div class="section">
+            <h2>快速入口</h2>
+            <a href="/seats/page" class="btn">座位选择</a>
+            <a href="scan_qr_code" class="btn">扫码选座</a>
+        </div>
+
+        <div class="section">
+            <h2>图书馆概况</h2>
+            <p>本馆共有座位200个，分布在4个楼层，提供普通座位、插座座位、靠窗座位和静音区座位等多种选择。</p>
+            <p>开放时间：周一至周日 8:00-22:00</p>
+            <p>预约规则：每次最多预约4小时，每日最多预约1次</p>
+        </div>
+
+        <div class="section">
+            <h2>我的预约记录</h2>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+
+            <form method="GET" action="">
+                <label for="user_id">请输入用户ID：</label>
+                <input type="text" id="user_id" name="user_id" placeholder="例如：U1001"
+                       {% if user_id %}value="{{ user_id }}"{% endif %}>
+                <button type="submit">查询</button>
+            </form>
+
+            {% if reservations %}
+                <table>
+                    <tr>
+                        <th>座位编号</th>
+                        <th>预约时间</th>
+                        <th>结束时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                    {% for reservation in reservations %}
+                    <tr>
+                        <td>{{ reservation.seat.seat_number }}</td>
+                        <td>{{ reservation.start_time }}</td>
+                        <td>{{ reservation.end_time }}</td>
+                        <td>
+                            {% if reservation.is_used %}
+                                <span style="color: green;">已使用</span>
+                            {% elif reservation.end_time < now %}
+                                <span style="color: red;">已过期</span>
+                            {% else %}
+                                <span style="color: blue;">有效</span>
+                                <span style="color: orange;">(剩余: {{ reservation.end_time|timeuntil:now }})</span>
+                            {% endif %}
+                            <br>
+                            <span style="color: gray; font-size: 12px;">
+                                时长: {{ reservation.end_time|timeuntil:reservation.start_time }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if not reservation.is_used and reservation.end_time > now %}
+                                <a href="/reservations/cancel?id={{ reservation.id }}" class="btn-reserve">取消预约</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% elif user_id and not reservations %}
+                <p>未找到该用户的预约记录</p>
+            {% endif %}
         </div>
     </div>
 </body>

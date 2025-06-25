@@ -1,16 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>扫码选座</title>
+    <meta charset="UTF-8">
+    <title>扫码选座</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .qr-scanner { margin: 20px 0; border: 1px solid #ddd; padding: 15px; }
+        .btn { display: inline-block; padding: 8px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
-    <div>
-        <div>扫码选座</div>
-        <div>
-            <input type="text" placeholder="请扫描座位二维码">
-            <button>确认</button>
-        </div>
+    <div class="container">
+        <h1>扫码选座</h1>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if seat %}
+            <div class="qr-scanner">
+                <h3>已扫描座位：{{ seat.seat_number }}</h3>
+
+                {% if seat.is_available %}
+                    <p>此座位当前可用</p>
+                    <form action="/reservations/confirm" method="post">
+                        <input type="hidden" name="seat_id" value="{{ seat.id }}">
+                        <div>
+                            <label>用户 ID</label>
+                            <input type="text" name="user_id" placeholder="请输入用户 ID">
+                        </div>
+                        <div>
+                            <label>开始时间</label>
+                            <input type="datetime-local" name="start_time">
+                        </div>
+                        <div>
+                            <label>预约时长</label>
+                            <select name="duration">
+                                <option value="30">30分钟</option>
+                                <option value="60" selected>1小时</option>
+                                <option value="120">2小时</option>
+                                <option value="180">3小时</option>
+                                <option value="240">4小时</option>
+                            </select>
+                        </div>
+                        <button type="submit">确认预约</button>
+                    </form>
+                {% else %}
+                    <p style="color: red;">此座位已被预约</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="qr-scanner">
+                <p>请输入座位编号或扫描座位二维码</p>
+                <form method="GET" action="">
+                    <input type="text" name="seat_id" placeholder="输入座位ID">
+                    <button type="submit">查询座位</button>
+                </form>
+            </div>
+        {% endif %}
+
+        <a href="/" class="btn">返回首页</a>
     </div>
 </body>
 </html>

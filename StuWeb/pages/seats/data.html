@@ -1,31 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>座位选择</title>
+    <meta charset="UTF-8">
+    <title>座位选择</title>
+    <!-- 添加自动刷新 -->
+    <meta http-equiv="refresh" content="30">  <!-- 每30秒刷新一次 -->
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; color: #333; }
+        .stats { margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
+        .available { color: green; font-weight: bold; }
+        .reserved { color: red; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; text-align: left; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .btn-reserve { background-color: #4CAF50; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-reserve:hover { background-color: #45a049; }
+        .btn-disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
+    </style>
 </head>
 <body>
-    <div>
-        <div>座位选择</div>
-        <div>
-            <table>
+    <div class="container">
+        <div class="header">
+            <h1>座位选择</h1>
+            <div class="stats">
+                总座位数: {{ seats.count }} |
+                <span class="available">可用: {{ available_count }}</span> |
+                <span class="reserved">已预约: {{ reserved_count }}</span>
+            </div>
+        </div>
+
+        <table>
+            <tr>
+                <th>座位编号</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            {% for seat in seats %}
                 <tr>
-                    <th>座位编号</th>
-                    <th>状态</th>
-                    <th>操作</th>
+                    <td>{{ seat.seat_number }}</td>
+                    <td>
+                        {% if seat.is_available %}
+                            <span class="available">可用</span>
+                        {% else %}
+                            <span class="reserved">已预约</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if seat.is_available %}
+                            <a href="/reservations/confirm?seat_id={{ seat.id }}" class="btn-reserve">预约</a>
+                        {% else %}
+                            <button class="btn-reserve btn-disabled" disabled>已预约</button>
+                        {% endif %}
+                    </td>
                 </tr>
-                {% for seat in seats %}
-                    <tr>
-                        <td>{{ seat.seat_number }}</td>
-                        <td>{% if seat.is_available %}可用{% else %}已预约{% endif %}</td>
-                        <td>
-                            {% if seat.is_available %}
-                                <a href="/reservations/confirm?seat_id={{ seat.id }}">预约</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </table>
+            {% endfor %}
+        </table>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="/" class="btn-reserve">返回首页</a>
         </div>
     </div>
 </body>

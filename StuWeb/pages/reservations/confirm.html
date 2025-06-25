@@ -26,6 +26,17 @@
                     <input type="datetime-local" name="start_time">
                 </div>
                 <div>
+                    <label>预约时长</label>
+                    <select name="duration">
+                        <option value="30">30分钟</option>
+                        <option value="60" selected>1小时</option>
+                        <option value="120">2小时</option>
+                        <option value="180">3小时</option>
+                        <option value="240">4小时</option>
+                    </select>
+                    <span style="color: gray; font-size: 12px;">（最多4小时）</span>
+                </div>
+                <div>
                     <button type="submit">提交</button>
                     <button type="reset">取消</button>
                 </div>
