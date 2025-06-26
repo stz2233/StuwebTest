@@ -5,7 +5,7 @@ urlpatterns = [
     path('', app.views.toWelcomeView),
     path('seats/page', app.views.toPageSeatInfos),
     path('reservations/confirm', app.views.toReservationConfirmView),
-    # path('reservations/history', app.views.toReservationHistoryView),
+    path('reservations/history', app.views.toReservationHistoryView),
     path('reservations/cancel', app.views.cancelReservation),
     path('scan/qr/code', app.views.toScanQrCodeView),
     path('qrcode/generate', app.views.toGenerateQrCodeView),  # 二维码生成页面
